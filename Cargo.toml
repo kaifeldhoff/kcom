@@ -1,0 +1,9 @@
+^[package]
+name = "kcom"
+version = "1.1.0"
+authors = [Kai Feldhoff <kaifeldhoff@yahoo.de>]
+
+[dependencies]
+failure = "0.1"
+termion = "1.5"
+tui = "0.5"
