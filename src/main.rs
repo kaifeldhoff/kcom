@@ -1,12 +1,3 @@
-/*
-TODO
-
-Fix: try to keep selection on changed filter
-
-Add: Keys: Pg-Up/Down, Del(one dir back)
-Add: Breadcrumb click-able
-
-*/
 extern crate failure;
 extern crate termion;
 extern crate tui;
