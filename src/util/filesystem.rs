@@ -1,19 +1,17 @@
 use std::env;
 use std::fs;
-use std::path::PathBuf;
 use std::os::unix::ffi::OsStringExt;
+use std::path::PathBuf;
 
-
-pub  fn get_current_dir() -> Result<PathBuf, failure::Error> {
+pub fn get_current_dir() -> Result<PathBuf, failure::Error> {
     Ok(env::current_dir()?)
 }
 
 type Tgdc = Vec<String>;
-pub fn get_dir_content(dir: &PathBuf)
-        -> Result<(Tgdc, Tgdc, Tgdc), failure::Error> {
-    let mut subdirs = vec!();
-    let mut files = vec!();
-    let symlinks = vec!();
+pub fn get_dir_content(dir: &PathBuf) -> Result<(Tgdc, Tgdc, Tgdc), failure::Error> {
+    let mut subdirs = vec![];
+    let mut files = vec![];
+    let symlinks = vec![];
     for entry_result in fs::read_dir(dir)? {
         let entry = entry_result?;
         let raw_filename = entry.file_name();

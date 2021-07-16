@@ -3,7 +3,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
-use termion::event::{Event, Key, MouseEvent, MouseButton};
+use termion::event::{Event, Key, MouseButton, MouseEvent};
 use termion::input::TermRead;
 
 pub enum MyEvent {
@@ -50,34 +50,34 @@ impl Events {
                     match evt {
                         Ok(Event::Key(key)) => {
                             if let Err(_) = tx.send(MyEvent::Input(key)) {
-                                return
+                                return;
                             }
                             if key == config.exit_key {
-                                return
+                                return;
                             }
                         }
                         Ok(Event::Mouse(MouseEvent::Press(MouseButton::WheelUp, _, _))) => {
                             if let Err(_) = tx.send(MyEvent::Input(Key::Up)) {
-                                return
+                                return;
                             }
                         }
                         Ok(Event::Mouse(MouseEvent::Press(MouseButton::WheelDown, _, _))) => {
                             if let Err(_) = tx.send(MyEvent::Input(Key::Down)) {
-                                return
+                                return;
                             }
                         }
                         Ok(Event::Mouse(MouseEvent::Press(MouseButton::Left, x, y))) => {
                             if let Err(_) = tx.send(MyEvent::Click(x, y)) {
-                                return
+                                return;
                             }
                         }
                         // Quit on Right-Mouse-Button
                         Ok(Event::Mouse(MouseEvent::Press(MouseButton::Right, _x, _y))) => {
                             if let Err(_) = tx.send(MyEvent::Input(Key::Alt('q'))) {
-                                return
+                                return;
                             }
                         }
-                        Err(_) => {},
+                        Err(_) => {}
                         _ => {}
                     }
                 }
@@ -86,7 +86,9 @@ impl Events {
         let _tick_handle = {
             let tx = tx.clone();
             thread::spawn(move || {
-                if true { return }
+                if true {
+                    return;
+                }
                 let tx = tx.clone();
                 loop {
                     tx.send(MyEvent::Tick).unwrap();

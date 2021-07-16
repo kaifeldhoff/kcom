@@ -5,7 +5,7 @@ extern crate tui;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
-use std::path::{PathBuf, Component};
+use std::path::{Component, PathBuf};
 
 use termion::event::Key;
 use termion::input::MouseTerminal;
@@ -20,10 +20,10 @@ use tui::Terminal;
 mod util;
 mod widgets;
 
-use widgets::label::Label;
+use util::event::{Events, MyEvent};
 use util::filesystem::get_current_dir;
 use util::filesystem::get_dir_content;
-use util::event::{MyEvent, Events};
+use widgets::label::Label;
 
 const CMD_FILE: &'static str = ".kcom.cmd";
 const DEFAULT_FILTER: &'static str = "";
@@ -47,11 +47,11 @@ struct App {
 impl App {
     fn new() -> Result<App, failure::Error> {
         let current_dir = get_current_dir()?;
-        let files = vec!();
-        let subdirs = vec!();
-        let all_files = vec!();
-        let all_subdirs = vec!();
-        Ok ( App {
+        let files = vec![];
+        let subdirs = vec![];
+        let all_files = vec![];
+        let all_subdirs = vec![];
+        Ok(App {
             window_width: 0,
             selected: Some(0),
             top_col: 0,
@@ -71,9 +71,7 @@ impl App {
         let (mut all_subdirs, mut all_files, symlinks) = {
             match get_dir_content(&self.current_dir) {
                 Ok((r1, r2, r3)) => (r1, r2, r3),
-                Err(e) => {
-                    (vec!(format!("{:?}", e)), vec!(), vec!())
-                }
+                Err(e) => (vec![format!("{:?}", e)], vec![], vec![]),
             }
         };
 
@@ -90,7 +88,8 @@ impl App {
             Some(ref f) => f,
             None => DEFAULT_FILTER,
         };
-        let mut subdirs = self.all_subdirs
+        let mut subdirs = self
+            .all_subdirs
             .iter()
             .filter(|d| self.show_hidden || !d.starts_with('.'))
             .filter(|d| d.contains(filter))
@@ -101,7 +100,8 @@ impl App {
         }
         self.subdirs = subdirs;
 
-        let mut files = self.all_files
+        let mut files = self
+            .all_files
             .iter()
             .filter(|f| self.show_hidden || !f.starts_with("."))
             .filter(|f| f.contains(filter))
@@ -126,22 +126,20 @@ impl App {
         if let Some(s) = self.selected {
             if let Some(ref subdir) = self.subdirs.get(s) {
                 if *subdir == &"../".to_string() {
-                    let basedir = self.current_dir
+                    let basedir = self
+                        .current_dir
                         .file_name()
                         .unwrap()
                         .to_string_lossy()
                         .to_string();
                     last_dir = Some(basedir);
-                    self.current_dir = self.current_dir
-                        .parent()
-                        .unwrap()
-                        .to_path_buf();
+                    self.current_dir = self.current_dir.parent().unwrap().to_path_buf();
                 } else {
                     self.current_dir = self.current_dir.join(subdir);
                 }
             } else {
                 // file is selected
-                return Ok(())
+                return Ok(());
             }
         }
         self.filter = None;
@@ -150,12 +148,9 @@ impl App {
         self.selected = {
             match last_dir {
                 Some(dir) => {
-                    let index = self.subdirs
-                        .iter()
-                        .position(|ref r| *r == &dir)
-                        .unwrap();
+                    let index = self.subdirs.iter().position(|ref r| *r == &dir).unwrap();
                     Some(index)
-                },
+                }
                 None => Some(0),
             }
         };
@@ -164,12 +159,12 @@ impl App {
     fn _current_path_as_string(&self) -> String {
         format!("{}", &self.current_dir.display())
     }
-    fn _breadcrumb_length (&self) -> usize {
+    fn _breadcrumb_length(&self) -> usize {
         self.current_dir.to_string_lossy().chars().count()
     }
     fn breadcrumb_lines(&self) -> Vec<String> {
         let path_as_string = self.current_dir.to_string_lossy();
-        let mut lines = vec!();
+        let mut lines = vec![];
         let mut item = "".to_string();
         let mut iter_chars = path_as_string.chars();
         let mut col = 0;
@@ -185,21 +180,19 @@ impl App {
                         item.push(c);
                         col = 1;
                     }
-                },
+                }
                 None => {
                     if !item.is_empty() {
                         lines.push(item.clone());
                     }
-                    break
+                    break;
                 }
             }
         }
         lines
     }
-    fn breadcrumb_chdir(&mut self, x: u16, y: u16)
-        -> Result<(), failure::Error>
-    {
-        let pos = ((x-1) + (y-1)*self.window_width) as usize;
+    fn breadcrumb_chdir(&mut self, x: u16, y: u16) -> Result<(), failure::Error> {
+        let pos = ((x - 1) + (y - 1) * self.window_width) as usize;
         let mut len = 0;
         let mut clicked_path = PathBuf::from("/");
         for comp in self.current_dir.components() {
@@ -208,11 +201,11 @@ impl App {
                 Component::Normal(p) => {
                     len += p.to_string_lossy().chars().count() + 1;
                     clicked_path = clicked_path.join(p);
-                },
+                }
                 _ => (),
             }
             if len >= pos {
-                break
+                break;
             }
         }
         self.current_dir = clicked_path;
@@ -259,7 +252,6 @@ fn run() -> Result<(), failure::Error> {
 
     let mut cur_size = terminal.size()?;
     loop {
-
         // check for resize
         let size = terminal.size()?;
         if cur_size != size {
@@ -278,7 +270,8 @@ fn run() -> Result<(), failure::Error> {
                         Constraint::Length(breadcrumb_lines.len() as u16),
                         Constraint::Max(100),
                         // Constraint::Length(1),
-                    ].as_ref()
+                    ]
+                    .as_ref(),
                 )
                 .split(cur_size);
 
@@ -295,15 +288,13 @@ fn run() -> Result<(), failure::Error> {
                 .items(&[&app.subdirs[..], &app.files[..]].concat())
                 .select(app.selected)
                 // .style(style)
-                .highlight_style(
-                    style.fg(Color::Black)
-                        .bg(Color::Cyan))
+                .highlight_style(style.fg(Color::Black).bg(Color::Cyan))
                 .render(&mut f, chunks[1]);
 
             // Header
             let header_lines = {
                 if let Some(ref f) = app.filter {
-                    vec!(format!("Filter: {}", f))
+                    vec![format!("Filter: {}", f)]
                 } else {
                     breadcrumb_lines
                 }
@@ -312,7 +303,6 @@ fn run() -> Result<(), failure::Error> {
                 .style(style.fg(Color::LightYellow))
                 .text(header_lines)
                 .render(&mut f, chunks[0]);
-
         })?;
 
         match events.next()? {
@@ -342,7 +332,7 @@ fn run() -> Result<(), failure::Error> {
                     } else {
                         Some(0)
                     }
-                },
+                }
                 Key::Home => {
                     // if below first file, move to top of files
                     // , otherwise move to top of list
@@ -356,28 +346,28 @@ fn run() -> Result<(), failure::Error> {
                         // selection unknown -> move to top of list
                         app.selected = Some(0);
                     }
-                },
+                }
                 Key::End => {
                     // if above last subdirs, move to end of subdirs
                     // , otherwise move to end of list
                     if let Some(selected) = app.selected {
                         if selected < app.subdirs.len() - 1 {
-                            app.selected = Some(app.subdirs.len()-1);
+                            app.selected = Some(app.subdirs.len() - 1);
                         } else {
-                            app.selected = Some(app.list_length-1);
+                            app.selected = Some(app.list_length - 1);
                         }
                     } else {
                         // selection unknown -> move to end of list
-                        app.selected = Some(app.list_length-1);
+                        app.selected = Some(app.list_length - 1);
                     }
-                },
+                }
                 Key::F(1) => {
                     app.show_hidden = !app.show_hidden;
                     app.build_displayed_items()?;
                 }
                 Key::Char('\n') => {
                     app.change_dir()?;
-                },
+                }
                 Key::Char(c) => {
                     if let Some(ref mut filter) = app.filter {
                         filter.push(c);
@@ -385,7 +375,7 @@ fn run() -> Result<(), failure::Error> {
                         app.filter = Some(c.to_string())
                     }
                     app.build_displayed_items()?;
-                },
+                }
                 Key::Backspace => {
                     if app.filter.is_some() {
                         if let Some(ref mut filter) = app.filter {
@@ -398,7 +388,7 @@ fn run() -> Result<(), failure::Error> {
                     } else {
                         // Todo: got up parent-dir
                     }
-                },
+                }
                 Key::Esc => {
                     app.filter = None;
                     app.build_displayed_items()?;

@@ -3,7 +3,6 @@ use tui::layout::Rect;
 use tui::style::Style;
 use tui::widgets::Widget;
 
-
 pub struct Label {
     lines: Vec<String>,
     style: Style,
@@ -12,7 +11,7 @@ pub struct Label {
 impl Default for Label {
     fn default() -> Label {
         Label {
-            lines: vec!(),
+            lines: vec![],
             style: Style::default(),
         }
     }
@@ -21,9 +20,7 @@ impl Default for Label {
 impl Widget for Label {
     fn draw(&mut self, area: Rect, buf: &mut Buffer) {
         for (i, line) in self.lines.iter().enumerate() {
-            buf.set_string(
-                area.left(), area.top() + (i as u16), line, self.style
-            );
+            buf.set_string(area.left(), area.top() + (i as u16), line, self.style);
         }
     }
 }
